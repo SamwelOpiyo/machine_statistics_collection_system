@@ -14,6 +14,31 @@ from datetime import datetime
 
 import sqlite3
 
+import smtplib
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
+
+def send_mail(message, current, limit, email):
+    msg = MIMEMultipart()
+    msg['From'] = 'admin@samwelopiyo.guru'
+    msg['To'] = email
+    msg['Subject'] = 'Email from Machine Statistics Collection System'
+    message = message + "\nCurrent:" + current + "\nLimit:" + limit
+    msg.attach(MIMEText(message))
+
+    mailserver = smtplib.SMTP('smtp.zoho.com',587)
+    # identify ourselves to smtp gmail client
+    mailserver.ehlo()
+    # secure our email with tls encryption
+    mailserver.starttls()
+    # re-identify ourselves as an encrypted connection
+    mailserver.ehlo()
+    mailserver.login('admin@samwelopiyo.guru', 'tZXr8yQJQmNq')
+
+    mailserver.sendmail('admin@samwelopiyo.guru', email, msg.as_string())
+
+    mailserver.quit()
+
 
 def decrypt_response(response):
     #  Encryption Key
@@ -126,6 +151,7 @@ def main():
 
     #  Converts the xml data to python dictionary
     clients = xmltodict.parse(u)
+    print clients
 
     for client in clients:
         ip = str(clients[client]["client"]["@ip"])
@@ -135,6 +161,11 @@ def main():
         email = str(clients[client]["client"]["@mail"])
         msg = connect(ip, port, username, password, email)
         time = str(datetime.now())
+        
+        if msg["Memory"]["percent"] > clients[client]["client"]["alert"][0]["@limit"]:
+            send_mail("Memory Limit Exceeded", msg["Memory"]["percent"],clients[client]["client"]["alert"][0]["@limit"],email)
+        if msg["CPU"]["cpu_usage"] > clients[client]["client"]["alert"][1]["@limit"]:
+            send_mail("CPU Limit Exceeded", msg["CPU"]["cpu_usage"],clients[client]["client"]["alert"][1]["@limit"],email)
 
         #  connects to a sqlite database(file), greenshoe.db, if it exists or creates it
         conn = sqlite3.connect('NetworkData.db')
