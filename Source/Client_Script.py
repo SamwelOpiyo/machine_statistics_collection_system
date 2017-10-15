@@ -80,7 +80,9 @@ def main():
         """
         users[each[0]] = dict([(k, str(v)) for k, v in each._asdict().items()])
 
+    #  Creates an empty dictionary to hold CPU details
     CPU = {}
+    #  Assigns CPU details to the dictionary with descriptive key
     CPU["cpu_usage"] = float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline())
     CPU["cpu_count"] = psutil.cpu_count()
     CPU["boot_time"] = time() - psutil.boot_time()
@@ -102,8 +104,10 @@ def main():
         print error
     """
 
+    #  Combines everything into result dictionary while converting unconverted values to strings
     result = {"Platform": sys.platform, "Memory": dict([(k, str(v)) for k, v in memory.items()]), "Swap": dict([(k, str(v)) for k, v in swap.items()]), "DiskPartitions": disk_partitions, "DiskUsage": dict([(k, str(v)) for k, v in disk_usage.items()]), "Network": dict([(k, str(v)) for k, v in network.items()]), "Users": users, "CPU": dict([(k, str(v)) for k, v in CPU.items()])}
 
+    #  If the operating System of the client is Windows, obtains logs through the win32evtlog
     if os.name == 'nt':
         import win32evtlog
         host = 'localhost'
@@ -122,12 +126,15 @@ def main():
                 formatedEvents += '\nSource Name: ' + event.SourceName
                 formatedEvents += '\nEvent ID: ' + str(event.EventID)
                 formatedEvents += '\nEvent Type:' + str(event.EventType) + '\n'
+            #  Adds Logs to the result dictionary
             result["logs"] = str(formatedEvents)
 
+    #  Converts the result dictionary into a json string
     json_result = json.dumps(result)
     #  print result 
     #  print json_result
 
+    #  Calls the encrypt function to encrypt the json string
     msg = encrypt_response(json_result)
     print msg
 
