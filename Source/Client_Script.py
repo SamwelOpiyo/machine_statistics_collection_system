@@ -16,7 +16,7 @@ def encrypt_response(response):
     key = 'Thirty two encryption byte key!!'
     iv = '16 bit iv key!!!'
     cipher = AES.new(key, AES.MODE_CFB, iv)
-    #  Encryption of response
+    #  Encrypts response
     msg = cipher.encrypt(response)
     return msg
 

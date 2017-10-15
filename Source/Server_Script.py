@@ -16,9 +16,11 @@ import sqlite3
 
 
 def decrypt_response(response):
+    #  Encryption Key
     key = 'Thirty two encryption byte key!!'
     iv = '16 bit iv key!!!'
     cipher = AES.new(key, AES.MODE_CFB, iv)
+    #  Decrypts response
     msg = cipher.decrypt(response[:-1])
     #  print msg
     print "Response Decrypted Successfully."
@@ -29,10 +31,12 @@ def connect(ip, port, username, password, email):
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        #  Connects to a computer in the intranet using ssh client
         ssh.connect(ip, port, username, password)
         print "SSH connection Successful."
         sftp_client = ssh.open_sftp()
 
+        #  Tests if the Operating System of the client is Windows 
         stdin, stdout, stderr = ssh.exec_command('echo "test"')
         stdin.close()
         response = str(stdout.read())
@@ -42,7 +46,9 @@ def connect(ip, port, username, password, email):
         else:
             windows = True
 
+        #  Gets the upper directory where Server_Script.py is located
         parent_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        #  Sets the path and command to execute depending on the Operating System of the Client  
         if not windows:
             path = "/tmp/"
             command = 'sudo python /tmp/Client_Script.py'
@@ -50,12 +56,15 @@ def connect(ip, port, username, password, email):
         else:
             path = "C:\\Windows\\Temp\\"
             command = "python C:\\Windows\\Temp\\Client_Script.py"
- 
+
+	#  Creates the temp directory if it does not exist 
         if not os.path.exists(path):
             os.makedirs(path)
+        #  Uploads the Client_Script to temp directory in Client
         sftp_client.put(parent_directory + '/Source/Client_Script.py', path + 'Client_Script.py')
         print "File Transfer Successful."
 
+        #  Executes the command in client machine
         stdin, stdout, stderr = ssh.exec_command(command)
         if not windows:
             stdin.write(password + '\n')
@@ -63,11 +72,15 @@ def connect(ip, port, username, password, email):
             stdin.close()
         #  for line in stdout.readlines():
             #  print line.strip()
+
+        #  Gets the response
         response_ssh = stdout.read()
         #  print response
 
+        #  Calls on the function to decrypt the response
         msg = decrypt_response(response_ssh)
- 
+
+        #  Converts the response from json format to dictionary
         msg = json.loads(msg)
         print "Json response converted into a Python Dictionary Successfully."
        
@@ -102,6 +115,7 @@ def connect(ip, port, username, password, email):
 
 def main():
     try:
+        # reads the config variables fron config file 
         xml = codecs.open("config.xml", encoding="UTF-8")
         u = xml.read()
         print "Config variables read Successfully."
@@ -110,6 +124,7 @@ def main():
         print "Error Opening File"
         quit()
 
+    #  Converts the xml data to python dictionary
     clients = xmltodict.parse(u)
 
     for client in clients:
@@ -125,6 +140,7 @@ def main():
         conn = sqlite3.connect('NetworkData.db')
         print "Opened database successfully."
 
+        #  Enter system statistics into the database
         if len(conn.execute("select id from systemdetails where ip_address = '" + ip + "';").fetchall()) == 0:
             conn.execute("INSERT INTO systemdetails (ip_address, platform, date_entry) \
                           VALUES ('" + ip + "', '" + msg["Platform"] + "', '" + time + "');")
