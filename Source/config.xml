@@ -4,4 +4,3 @@
 		<alert type="cpu" limit="25%" />
 	</client>
 </clients>
-

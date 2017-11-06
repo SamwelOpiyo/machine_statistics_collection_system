@@ -15,11 +15,17 @@ following specifications.
 ### Server Script
 1. Installed on a single central machine in the same intranet.
 2. Each client is configured in a server config xml file something like this
-	`<client ip=’127.0.0.1’ port=’22’ username=’user’ password=’password’ mail="asa@asda.com">
+	`<client ip=’10.16.68.38’ port=’22’ username=’user’ password=’password’ mail="asa@asda.com">
 		<alert type="memory" limit="50%" />
 		<alert type="cpu" limit="20%" />
 	</client>`
-3. When executed, the server script should connect to each client using ssh, upload the client script in a temp directory, execute it and get the response.
+3. Email configurations for the sender are configured in a server email_config json file which is something like this
+	`{'email_configurations': {
+		'username': 'asa@asda.com',
+		'password': 'password'
+ 	  }
+	}`
+4. When executed, the server script should connect to each client using ssh, upload the client script in a temp directory, execute it and get the response.
 4. After receiving the response from the client script, server script should decode it and stores it into a relational database along with client ip. This collected data is consumed by another application, that is out of scope, but you may design the database table yourself.
 5. The server based upon the "alert" configuration of each client sends a mail notification. The notification is sent to the client configured email address using SMTP. Use a simple text mail format with some detail about the alert. event logs must be sent via email every time without any condition.
 
@@ -51,5 +57,6 @@ Then, to run:
 - Change directory: `cd Source`
 - Install requirements: `pip install -r requirements.txt` (you almost certainly want to do this in a virtualenv).
 - Create Database: `python Create_Database.py`
-- Start the ssh service in Linux: `systemctl start ssh`
+- Start the ssh service in Linux: `systemctl start ssh`(Ensure ssh service is started in clients and python 2.7.x is installed)
+- Edit config.xml and email_config.json with appropriate configurations
 - Run the System: `python Server_Script.py`
