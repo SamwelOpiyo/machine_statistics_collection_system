@@ -1,12 +1,27 @@
 import os
+def install_and_import(package_name, import_name=None, submodule=None):
+    if import_name is None:
+        import_name = package_name 
+    import importlib
+    try:
+        importlib.import_module(import_name, submodule)
+    except ImportError:
+        import pip
+        pip.main(['install', package_name])
+    finally:
+        globals()[re.sub('[..]', '', import_name)] = importlib.import_module(import_name, submodule)
+    return 
+
+
 import sys
 
-import psutil
+import re
+
+install_and_import("psutil")
 
 from time import time
 
-from Crypto.Cipher import AES
-from Crypto import Random
+install_and_import("pycrypto", "..AES", "Crypto.Cipher.subpkg") 
 
 import json
 
@@ -83,7 +98,8 @@ def main():
     #  Creates an empty dictionary to hold CPU details
     CPU = {}
     #  Assigns CPU details to the dictionary with descriptive key
-    CPU["cpu_usage"] = float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline())
+    #  CPU["cpu_usage"] = float(os.popen('''grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }' ''').readline())
+    CPU["cpu_usage"] = psutil.cpu_percent()
     CPU["cpu_count"] = psutil.cpu_count()
     CPU["boot_time"] = time() - psutil.boot_time()
     CPU["current_frequency"] = psutil.cpu_freq().current

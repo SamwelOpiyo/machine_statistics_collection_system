@@ -19,8 +19,18 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 
 def send_mail(message, current, limit, email):
+    try:
+        open_email_configuration_file = codecs.open("email_config.json", encoding="UTF-8")
+        email_configurations = json.loads(open_email_configuration_file.read())
+        open_email_configuration_file.close()
+        sender = email_configurations["email_configurations"]["username"]
+        password = email_configurations["email_configurations"]["password"]
+    except IOError:
+        print "IOError while trying to read file! Check Whether File Exixts!"
+        quit()
+    
     msg = MIMEMultipart()
-    msg['From'] = 'admin@samwelopiyo.guru'
+    msg['From'] = sender
     msg['To'] = email
     msg['Subject'] = 'Email from Machine Statistics Collection System'
     message = message + "\nCurrent:" + current + "\nLimit:" + limit
@@ -33,9 +43,9 @@ def send_mail(message, current, limit, email):
     mailserver.starttls()
     # re-identify ourselves as an encrypted connection
     mailserver.ehlo()
-    mailserver.login('admin@samwelopiyo.guru', 'tZXr8yQJQmNq')
+    mailserver.login(sender, password)
 
-    mailserver.sendmail('admin@samwelopiyo.guru', email, msg.as_string())
+    mailserver.sendmail(sender, email, msg.as_string())
 
     mailserver.quit()
 
@@ -141,17 +151,16 @@ def connect(ip, port, username, password, email):
 def main():
     try:
         # reads the config variables fron config file 
-        xml = codecs.open("config.xml", encoding="UTF-8")
-        u = xml.read()
+        xml_file_open = codecs.open("config.xml", encoding="UTF-8")
+        config_data = xml_file_open.read()
         print "Config variables read Successfully."
-        xml.close()
-    except:
-        print "Error Opening File"
+        xml_file_open.close()
+    except IOError:
+        print "IOError while trying to read file! Check Whether File Exixts!"
         quit()
 
     #  Converts the xml data to python dictionary
-    clients = xmltodict.parse(u)
-    print clients
+    clients = xmltodict.parse(config_data)
 
     for client in clients:
         ip = str(clients[client]["client"]["@ip"])
